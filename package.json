@@ -1,0 +1,10 @@
+{
+  "name": "linear-public-snapshots",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Public GitHub Pages snapshots of Linear issues",
+  "dependencies": {
+    "marked": "^15.0.0"
+  }
+}
