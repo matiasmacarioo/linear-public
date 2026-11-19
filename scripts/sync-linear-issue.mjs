@@ -35,7 +35,8 @@ const response = await fetch("https://api.linear.app/graphql", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    Authorization: apiKey
+    Authorization: apiKey,
+    "public-file-urls-expire-in": "60"
   },
   body: JSON.stringify({ query, variables: { id: issueIdentifier } })
 });
@@ -80,7 +81,9 @@ await fs.mkdir(assetsDir, { recursive: true });
 
 const downloaded = [];
 for (const image of images) {
-  const imageResponse = await fetch(image.src);
+  const imageResponse = await fetch(image.src, {
+    headers: { Authorization: `Bearer ${apiKey}` }
+  });
   if (!imageResponse.ok) {
     console.error(`Could not download image ${image.index}: ${imageResponse.status}`);
     continue;
