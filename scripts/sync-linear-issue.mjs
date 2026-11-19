@@ -53,16 +53,26 @@ if (!issue) {
   process.exit(1);
 }
 
-const imageBlocks = [...(issue.description || "").matchAll(/<linear-image>(\{[\s\S]*?\})<\/linear-image>/g)];
-const images = imageBlocks.map((match, index) => {
-  const data = JSON.parse(match[1]);
-  const attrs = data.attrs || data;
-  return {
-    index: index + 1,
-    src: attrs.src,
-    title: attrs.title || `image-${index + 1}`
-  };
+let description = issue.description || "";
+
+// Linear API may return <linear-image> JSON blocks or standard Markdown images.
+description = description.replace(/<linear-image>(\{[\s\S]*?\})<\/linear-image>/g, (match, json) => {
+  try {
+    const data = JSON.parse(json);
+    const attrs = data.attrs || data;
+    return `![${attrs.title || "image"}](${attrs.src})`;
+  } catch {
+    return "";
+  }
 });
+description = description.replace(/<img[^>]+src="([^"]+)"[^>]*>/gi, (match, src) => `![image](${src})`);
+
+const imageRegex = /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
+const images = [...description.matchAll(imageRegex)].map((match, index) => ({
+  index: index + 1,
+  alt: match[1] || `image-${index + 1}`,
+  src: match[2]
+}));
 
 const assetsDir = path.join("assets", issue.identifier);
 await fs.rm(assetsDir, { recursive: true, force: true });
@@ -91,9 +101,9 @@ for (const image of images) {
   downloaded.push({ index: image.index, filename });
 }
 
-let markdown = issue.description || "";
+let markdown = description;
 let markdownImageIndex = 0;
-markdown = markdown.replace(/<linear-image>[\s\S]*?<\/linear-image>/g, () => {
+markdown = markdown.replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, () => {
   markdownImageIndex += 1;
   return `\n\n@@IMAGE_${markdownImageIndex}@@\n\n`;
 });
