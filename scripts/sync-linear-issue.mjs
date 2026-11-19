@@ -23,6 +23,7 @@ const query = `
       description
       url
       priorityLabel
+      updatedAt
       state { name }
       team { name }
       project { name }
@@ -127,6 +128,15 @@ const escapeHtml = (value) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
 
+const formatDate = (value) => {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("es-AR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Argentina/Buenos_Aires"
+  }).format(new Date(value));
+};
+
 const labels = (issue.labels?.nodes || []).map((label) => label.name).join(", ") || "—";
 const project = issue.project?.name || "—";
 const team = issue.team?.name || "—";
@@ -167,7 +177,11 @@ const html = `<!DOCTYPE html>
 <h2>Descripción</h2>
 ${bodyHtml}
 
-<footer>Snapshot generado desde Linear. No se actualiza automáticamente.</footer>
+<footer>
+  <div><strong>Última actualización en Linear:</strong> ${escapeHtml(formatDate(issue.updatedAt))}</div>
+  <div><strong>Snapshot generado:</strong> ${escapeHtml(formatDate(new Date().toISOString()))}</div>
+  <div>Se sincroniza automáticamente cada 15 minutos.</div>
+</footer>
 </body>
 </html>
 `;
